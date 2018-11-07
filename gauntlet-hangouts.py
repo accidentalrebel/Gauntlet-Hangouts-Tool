@@ -4,13 +4,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.common.action_chains import ActionChains
 
 EVENTS_URL = 'https://gauntlet-hangouts.firebaseapp.com/events'
 EVENTS_INFO_URL = "https://gauntlet-hangouts.firebaseapp.com/all-events-info"
 HEADER_TITLES = ['Title', 'Event Creator', 'Start Time', 'All Access Time', 'Percent RSVP', 'Max Users', 'RSVPs', 'Waitlist']
 
 options = Options()
-options.headless = True
+options.headless = False
 driver = webdriver.Firefox(options=options)
 
 class HasLoadedAllEntries():
@@ -62,6 +63,15 @@ def load_events_info():
 
         print('')
 
+    # Still a test
+    tr_element = tr_elements[5]
+    actions = ActionChains(driver)
+    actions.move_to_element(tr_element)
+    actions.click(tr_element)
+    actions.perform()
+    sleep(30)
+    # end test
+    
     print('-- Process Complete --')
             
 load_events_info()
