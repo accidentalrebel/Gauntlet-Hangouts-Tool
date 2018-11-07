@@ -9,19 +9,14 @@ EVENTS_URL = 'https://gauntlet-hangouts.firebaseapp.com/events'
 EVENTS_INFO_URL = "https://gauntlet-hangouts.firebaseapp.com/all-events-info"
 
 options = Options()
-options.headless = False
+options.headless = True
 driver = webdriver.Firefox(options=options)
 
-class element_has_css_class():
-    def __init__(self, locator, css_class):
-        self.locator = locator
-        self.css_class = css_class
-
+class HasLoadedAllEntries():
     def __call__(self, driver):
-        elements = lambda: driver.find_elements_by_tag_name(self.css_class)
-        print('ELEMENTS COUNT IS ' + str(len(elements())))
-        if len(elements()) > 1:
-            return elements()
+        elements = driver.find_elements_by_tag_name('tr')
+        if len(elements) > 1:
+            return True
 
         return False
 
@@ -35,16 +30,21 @@ def load_events():
         print(str(element.get_attribute('outerHTML')))
 
 def load_events_info():
+    print('Loading the page ' + EVENTS_INFO_URL + '...')
     driver.get(EVENTS_INFO_URL)
-    wait = WebDriverWait(driver, 60)
 
-    # element = driver.find_element_by_tag_name('datatable-body')
-    # driver.execute_script("arguments[0].setAttribute('style','height: 99999px')", element)
-
+    # Click on the button "Excel Table" button
     driver.find_element_by_class_name('btn-black').click()
+    print('Switched to Excel Table')
 
-    elements = wait.until(element_has_css_class((By.TAG_NAME, 'tr'), "tr"))
-    sleep(5) # This is needed to avoid getting a stale 'tr' with the next line of code
+    print('Waiting for all entries to be loaded...')
+    wait = WebDriverWait(driver, 60)
+    wait.until(HasLoadedAllEntries())
+    print('All entries loaded!')
+
+    # This is needed to avoid getting a stale 'tr' with the next line of code
+    sleep(1)
+    print('Sleeping for a bit...\n')
 
     elements = driver.find_elements_by_tag_name('tr')
     for element in elements:
