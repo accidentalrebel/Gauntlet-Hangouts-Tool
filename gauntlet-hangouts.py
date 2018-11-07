@@ -7,6 +7,7 @@ from selenium.webdriver.firefox.options import Options
 
 EVENTS_URL = 'https://gauntlet-hangouts.firebaseapp.com/events'
 EVENTS_INFO_URL = "https://gauntlet-hangouts.firebaseapp.com/all-events-info"
+HEADER_TITLES = ['Title', 'Event Creator', 'Start Time', 'All Access Time', 'Percent RSVP', 'Max Users', 'RSVPs', 'Waitlist']
 
 options = Options()
 options.headless = True
@@ -46,9 +47,21 @@ def load_events_info():
     sleep(1)
     print('Sleeping for a bit...\n')
 
-    elements = driver.find_elements_by_tag_name('tr')
-    for element in elements:
+    tr_elements = driver.find_elements_by_tag_name('tr')
+    for tr_element in tr_elements:
         #print(element.text)
-        print(str(element.get_attribute('innerHTML')))
+        td_elements = tr_element.find_elements_by_tag_name('td')
 
+        index = 0
+
+        for td_element in td_elements:
+            header = HEADER_TITLES[index]
+            print(header + ': ' + td_element.text)
+            
+            index = index + 1
+
+        print('')
+
+    print('-- Process Complete --')
+            
 load_events_info()
