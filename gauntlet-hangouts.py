@@ -15,6 +15,8 @@ HEADER_TITLES = ['title', 'creator', 'start_time', 'all_access_time', 'rsvp_perc
 
 EVENTS_COUNT_LIMIT = 10
 
+day_filter = [ 0, 1, 2, 3, 4, 5 ]
+
 options = Options()
 options.headless = True
 driver = webdriver.Firefox(options=options)
@@ -64,7 +66,7 @@ def load_events_info():
         #print(element.text)
         td_elements = tr_element.find_elements_by_tag_name('td')
 
-        event = {}        
+        event = {}
         index = 0
         for td_element in td_elements:
             header = HEADER_TITLES[index]
@@ -72,7 +74,9 @@ def load_events_info():
             event[header] = td_element.text
             index = index + 1
 
-        events.append(event)
+        if index > 0:
+            events.append(event)
+            
         events_count = events_count + 1
 
     # Still a test
@@ -92,20 +96,28 @@ def parse_date(date_string):
     date_string = date_string.replace(' am', '')
     return dateparser.parse(date_string)
 
+def is_within_day(to_check):
+    for f in day_filter:
+        if f == to_check:
+            return True
+
+    return False
+
 def filter_by_time(events):
     for event in events:
-        print(str(event))
+        parsed_date = parse_date(event['start_time'])
+        if is_within_day(parsed_date.weekday()):
+            print('In weekday: ' + event['title'])
 
-current_date = datetime.now()
-parsed_date = parse_date('Friday, October 26, 2018, 20:00 pm')
-if current_date.hour > parsed_date.hour:
-    print('passed')
-else:
-    print('not passed')
+# current_date = datetime.now()
+# parsed_date = parse_date('Friday, October 26, 2018, 20:00 pm')
+# if current_date.hour > parsed_date.hour:
+#     print('passed')
+# else:
+#     print('not passed')
 
-print('Current: ' + str(current_date))    
-print('Parsed: ' + str(parsed_date))
+# print('Current: ' + str(current_date))    
+# print('Parsed: ' + str(parsed_date))
 
-
-# events_info = load_events_info()
-# filter_by_time(events_info)
+events_info = load_events_info()
+filter_by_time(events_info)
