@@ -172,5 +172,7 @@ if not include_unavailable:
 if not include_full:
     events_info = filter_by_users(events_info)
 
+index = 1
 for event in events_info:
-    print(event['rsvp_percent'] + '%: ' + event['title'] + '\n' + event['start_time'] + '\n')
+    print(str(index) + ': ' + event['rsvp_percent'] + '%\n' + event['title'] + '\n' + event['start_time'] + '\n')
+    index = index + 1
