@@ -18,7 +18,7 @@ EVENTS_COUNT_LIMIT = 999
 day_filter = [ 0, 1, 2, 3, 4, 5 ]
 time_filter_min = '08:30'
 time_filter_max = '12:00'
-include_full = False
+exclude_full = False
 
 options = Options()
 options.headless = True
@@ -135,6 +135,14 @@ def filter_by_time(events):
 
     return new_events
 
+def filter_by_users(events):
+    new_events = []
+    for e in events:
+        if e['max_users_count'] < e['rsvp_count']:
+            new_events.append(e)
+
+    return new_events
+
 # current_date = datetime.now()
 # parsed_date = parse_date('Friday, October 26, 2018, 20:00 pm')
 # if current_date.hour > parsed_date.hour:
@@ -147,7 +155,9 @@ def filter_by_time(events):
 
 events_info = load_events_info()
 events_info = filter_by_time(events_info)
-for event in events_info:
-    print('Filtered: ' + event['title'] + '\n' + event['start_time'] + '\n')
 
-# filter_by_users(events_info)
+if exclude_full:
+    events_info = filter_by_users(events_info)
+
+for event in events_info:
+    print('Filtered: ' + event['title'] + '\n' + event['start_time'] + '\n')    
