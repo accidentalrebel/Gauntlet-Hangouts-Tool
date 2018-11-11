@@ -18,7 +18,8 @@ EVENTS_COUNT_LIMIT = 999
 day_filter = [ 0, 1, 2, 3, 4, 5 ]
 time_filter_min = '08:30'
 time_filter_max = '12:00'
-exclude_full = False
+include_full = True
+include_unavailable = False
 
 options = Options()
 options.headless = True
@@ -143,6 +144,15 @@ def filter_by_users(events):
 
     return new_events
 
+def filter_by_availability(events):
+    new_events = []
+    for e in events:
+        parsed_date = parse_date(e['all_access_time'])
+        if is_within_day(parsed_date.weekday()) and is_within_times(parsed_date.hour, parsed_date.minute):
+            new_events.append(e)
+
+    return new_events
+
 # current_date = datetime.now()
 # parsed_date = parse_date('Friday, October 26, 2018, 20:00 pm')
 # if current_date.hour > parsed_date.hour:
@@ -156,8 +166,11 @@ def filter_by_users(events):
 events_info = load_events_info()
 events_info = filter_by_time(events_info)
 
-if exclude_full:
+if not include_unavailable:
+    events_info = filter_by_availability(events_info)
+
+if not include_full:
     events_info = filter_by_users(events_info)
 
 for event in events_info:
-    print('Filtered: ' + event['title'] + '\n' + event['start_time'] + '\n')    
+    print(event['rsvp_percent'] + '%: ' + event['title'] + '\n' + event['start_time'] + '\n')
