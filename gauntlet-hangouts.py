@@ -16,6 +16,8 @@ HEADER_TITLES = ['title', 'creator', 'start_time', 'all_access_time', 'rsvp_perc
 EVENTS_COUNT_LIMIT = 10
 
 day_filter = [ 0, 1, 2, 3, 4, 5 ]
+time_filter_min = '08:30'
+time_filter_max = '12:00'
 
 options = Options()
 options.headless = True
@@ -103,10 +105,22 @@ def is_within_day(to_check):
 
     return False
 
+def is_within_times(to_check_hour, to_check_minute):
+    splitted = time_filter_min.split(':')
+    filter_min_hour = splitted[0]
+    filter_min_minute = splitted[1]
+
+    if to_check_hour < int(filter_min_hour):
+        return False
+    if to_check_minute < int(filter_min_minute):
+        return False
+    
+    return True
+
 def filter_by_time(events):
     for event in events:
         parsed_date = parse_date(event['start_time'])
-        if is_within_day(parsed_date.weekday()):
+        if is_within_day(parsed_date.weekday()) and is_within_times(parsed_date.hour, parsed_date.minute):
             print('In weekday: ' + event['title'])
 
 # current_date = datetime.now()
