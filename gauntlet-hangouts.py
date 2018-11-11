@@ -18,6 +18,7 @@ EVENTS_COUNT_LIMIT = 999
 day_filter = [ 0, 1, 2, 3, 4, 5 ]
 time_filter_min = '08:30'
 time_filter_max = '12:00'
+include_full = False
 
 options = Options()
 options.headless = True
@@ -126,10 +127,13 @@ def is_within_times(to_check_hour, to_check_minute):
     return False
 
 def filter_by_time(events):
-    for event in events:
-        parsed_date = parse_date(event['start_time'])
+    new_events = []
+    for e in events:
+        parsed_date = parse_date(e['start_time'])
         if is_within_day(parsed_date.weekday()) and is_within_times(parsed_date.hour, parsed_date.minute):
-            print('Filtered: ' + event['title'] + ': ' + event['start_time'])
+            new_events.append(e)
+
+    return new_events
 
 # current_date = datetime.now()
 # parsed_date = parse_date('Friday, October 26, 2018, 20:00 pm')
@@ -142,4 +146,8 @@ def filter_by_time(events):
 # print('Parsed: ' + str(parsed_date))
 
 events_info = load_events_info()
-filter_by_time(events_info)
+events_info = filter_by_time(events_info)
+for event in events_info:
+    print('Filtered: ' + event['title'] + '\n' + event['start_time'] + '\n')
+
+# filter_by_users(events_info)
