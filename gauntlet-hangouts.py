@@ -1,5 +1,6 @@
 import json
 import dateparser
+import argparse
 from datetime import datetime
 from time import sleep
 from selenium import webdriver
@@ -9,21 +10,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 
+AVAILABLE_COMMANDS = ['fetch']
 EVENTS_URL = 'https://gauntlet-hangouts.firebaseapp.com/events'
 EVENTS_INFO_URL = "https://gauntlet-hangouts.firebaseapp.com/all-events-info"
 HEADER_TITLES = ['title', 'creator', 'start_time', 'all_access_time', 'rsvp_percent', 'max_users_count', 'rsvp_count', 'waitlist_count']
-
 EVENTS_COUNT_LIMIT = 999
-
-day_filter = [ 0, 1, 2, 3, 4, 5 ]
-time_filter_min = '08:30'
-time_filter_max = '12:00'
-include_full = True
-include_unavailable = False
-
-options = Options()
-options.headless = True
-driver = webdriver.Firefox(options=options)
 
 class HasLoadedAllEntries():
     def __call__(self, driver):
@@ -32,6 +23,25 @@ class HasLoadedAllEntries():
             return True
 
         return False
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('command',
+                        choices=AVAILABLE_COMMANDS,
+                        help='The command to execute.',
+                        action='store')
+    
+    parser.add_argument('-f',
+                        '--full',
+                        help='Include full events.',
+                        action='store_true')
+
+    parser.add_argument('-u',
+                        '--unavailable',
+                        help='Include events that are not available yet for non-"Hangous Friend" patreon subscribers.',
+                        action='store_true')
+
+    return parser.parse_args()
 
 def load_events():
     driver.get(EVENTS_URL)
@@ -107,6 +117,13 @@ def is_within_day(to_check):
 
     return False
 
+def is_passed_date(to_check_date):
+    current_date = datetime.now()
+    if current_date >= to_check_date:
+        return True
+
+    return False
+
 def is_within_times(to_check_hour, to_check_minute):
     splitted = time_filter_min.split(':')
     filter_min_hour = int(splitted[0])
@@ -148,7 +165,7 @@ def filter_by_availability(events):
     new_events = []
     for e in events:
         parsed_date = parse_date(e['all_access_time'])
-        if is_within_day(parsed_date.weekday()) and is_within_times(parsed_date.hour, parsed_date.minute):
+        if is_passed_date(parsed_date):
             new_events.append(e)
 
     return new_events
@@ -163,6 +180,18 @@ def filter_by_availability(events):
 # print('Current: ' + str(current_date))    
 # print('Parsed: ' + str(parsed_date))
 
+args = parse_arguments()
+
+day_filter = [ 0, 1, 2, 3, 4, 5 ]
+time_filter_min = '08:00'
+time_filter_max = '10:00'
+include_full = args.full
+include_unavailable = args.unavailable
+
+options = Options()
+options.headless = True
+driver = webdriver.Firefox(options=options)
+
 events_info = load_events_info()
 events_info = filter_by_time(events_info)
 
@@ -174,5 +203,5 @@ if not include_full:
 
 index = 1
 for event in events_info:
-    print(str(index) + ': ' + event['rsvp_percent'] + '%\n' + event['title'] + '\n' + event['start_time'] + '\n')
+    print(str(index) + ' - Slots: ' + event['rsvp_count'] + '/' + event['max_users_count'] + ' - Waitlist: ' + event['waitlist_count'] + '\n' + event['title'] + '\n' + event['start_time'] + '\n')
     index = index + 1
