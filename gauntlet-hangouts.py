@@ -31,6 +31,11 @@ def parse_arguments():
                         choices=AVAILABLE_COMMANDS,
                         help='The command to execute.',
                         action='store')
+
+    parser.add_argument('-r',
+                        '--refresh',
+                        help='Force a refresh.',
+                        action='store_true')
     
     parser.add_argument('-f',
                         '--full',
@@ -211,7 +216,12 @@ if args.command == 'fetch':
     events_info = fetch_events_info()
     save_events_info(events_info)
 if args.command == 'filter':
-    events_info = load_events_info()
+    if args.refresh:
+        events_info = fetch_events_info()
+        save_events_info(events_info)
+    else:
+        events_info = load_events_info()
+
     events_info = filter_by_time(events_info)
 
     if not include_unavailable:
