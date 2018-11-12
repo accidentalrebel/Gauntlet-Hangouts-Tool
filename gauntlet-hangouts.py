@@ -1,6 +1,7 @@
 import json
 import dateparser
 import argparse
+import ast
 from datetime import datetime
 from time import sleep
 from selenium import webdriver
@@ -10,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 
-AVAILABLE_COMMANDS = ['fetch']
+AVAILABLE_COMMANDS = ['fetch', 'filter']
 EVENTS_URL = 'https://gauntlet-hangouts.firebaseapp.com/events'
 EVENTS_INFO_URL = "https://gauntlet-hangouts.firebaseapp.com/all-events-info"
 HEADER_TITLES = ['title', 'creator', 'start_time', 'all_access_time', 'rsvp_percent', 'max_users_count', 'rsvp_count', 'waitlist_count']
@@ -52,7 +53,7 @@ def load_events():
     for element in elements:
         print(str(element.get_attribute('outerHTML')))
 
-def load_events_info():
+def fetch_events_info():
     print('Loading the page ' + EVENTS_INFO_URL + '...')
     driver.get(EVENTS_INFO_URL)
 
@@ -170,6 +171,20 @@ def filter_by_availability(events):
 
     return new_events
 
+def save_events_info(events):
+    with open('events.txt', 'w') as events_file:
+        for e in events:
+            events_file.write(str(e) + "\n")
+        events_file.close()
+
+def load_events_info():
+    events = []
+    with open('events.txt', 'r') as events_file:
+        for line in events_file:
+            events.append(ast.literal_eval(line.strip()))
+
+    return events
+
 # current_date = datetime.now()
 # parsed_date = parse_date('Friday, October 26, 2018, 20:00 pm')
 # if current_date.hour > parsed_date.hour:
@@ -192,16 +207,20 @@ options = Options()
 options.headless = True
 driver = webdriver.Firefox(options=options)
 
-events_info = load_events_info()
-events_info = filter_by_time(events_info)
+if args.command == 'fetch':
+    events_info = fetch_events_info()
+    save_events_info(events_info)
+if args.command == 'filter':
+    events_info = load_events_info()
+    events_info = filter_by_time(events_info)
 
-if not include_unavailable:
-    events_info = filter_by_availability(events_info)
+    if not include_unavailable:
+        events_info = filter_by_availability(events_info)
 
-if not include_full:
-    events_info = filter_by_users(events_info)
+    if not include_full:
+        events_info = filter_by_users(events_info)
 
-index = 1
-for event in events_info:
-    print(str(index) + ' - Slots: ' + event['rsvp_count'] + '/' + event['max_users_count'] + ' - Waitlist: ' + event['waitlist_count'] + '\n' + event['title'] + '\n' + event['start_time'] + '\n')
-    index = index + 1
+    index = 1
+    for event in events_info:
+        print(str(index) + ' - Slots: ' + event['rsvp_count'] + '/' + event['max_users_count'] + ' - Waitlist: ' + event['waitlist_count'] + '\n' + event['title'] + '\n' + event['start_time'] + '\n')
+        index = index + 1
