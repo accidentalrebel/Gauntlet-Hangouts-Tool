@@ -47,6 +47,12 @@ def parse_arguments():
                         help='Include events that are not available yet for non-"Hangous Friend" patreon subscribers.',
                         action='store_true')
 
+    parser.add_argument('-w',
+                        '--waitlist',
+                        help='Include events that has a waitlist.',
+                        action='store_true')
+
+
     return parser.parse_args()
 
 def load_events():
@@ -131,12 +137,19 @@ def is_passed_date(to_check_date):
     return False
 
 def is_within_times(to_check_hour, to_check_minute):
+    
     splitted = time_filter_min.split(':')
     filter_min_hour = int(splitted[0])
     filter_min_minute = int(splitted[1])
 
+    if to_check_hour == 23:
+        print(str(to_check_hour) + ':' + str(to_check_minute))
+
     if to_check_hour < filter_min_hour or to_check_minute < filter_min_minute:
         return False
+
+    if to_check_hour == 23:
+        print('1 did not return false')
     
     splitted = time_filter_max.split(':')
     filter_max_hour = int(splitted[0])
@@ -145,34 +158,37 @@ def is_within_times(to_check_hour, to_check_minute):
     if to_check_hour <= filter_max_hour:
         return True
 
+    if to_check_hour == 23:
+        print('2 did not return false')
+
     if to_check_minute <= filter_max_minute:
         return True
+
+    if to_check_hour == 23:
+        print('3 did not return false')
         
     return False
 
-def filter_by_time(events):
+def filter_events(events):
     new_events = []
+
     for e in events:
         parsed_date = parse_date(e['start_time'])
-        if is_within_day(parsed_date.weekday()) and is_within_times(parsed_date.hour, parsed_date.minute):
-            new_events.append(e)
+        if not is_within_day(parsed_date.weekday()) or not is_within_times(parsed_date.hour, parsed_date.minute):
+            continue
+        
+        if not include_full and e['max_users_count'] >= e['rsvp_count']:
+            continue
+        
+        if not include_unavailable:
+            parsed_date = parse_date(e['all_access_time'])
+            if not is_passed_date(parsed_date):
+                continue
 
-    return new_events
+        if not include_waitlist and int(e['waitlist_count']) > 0:
+            continue
 
-def filter_by_users(events):
-    new_events = []
-    for e in events:
-        if e['max_users_count'] < e['rsvp_count']:
-            new_events.append(e)
-
-    return new_events
-
-def filter_by_availability(events):
-    new_events = []
-    for e in events:
-        parsed_date = parse_date(e['all_access_time'])
-        if is_passed_date(parsed_date):
-            new_events.append(e)
+        new_events.append(e)
 
     return new_events
 
@@ -202,11 +218,12 @@ def load_events_info():
 
 args = parse_arguments()
 
-day_filter = [ 0, 1, 2, 3, 4, 5 ]
+day_filter = [ 0, 1, 2, 3, 4 ]
 time_filter_min = '08:00'
 time_filter_max = '10:00'
 include_full = args.full
 include_unavailable = args.unavailable
+include_waitlist = args.waitlist
 
 options = Options()
 options.headless = True
@@ -221,14 +238,8 @@ if args.command == 'filter':
         save_events_info(events_info)
     else:
         events_info = load_events_info()
-
-    events_info = filter_by_time(events_info)
-
-    if not include_unavailable:
-        events_info = filter_by_availability(events_info)
-
-    if not include_full:
-        events_info = filter_by_users(events_info)
+        
+    events_info = filter_events(events_info)
 
     index = 1
     for event in events_info:
