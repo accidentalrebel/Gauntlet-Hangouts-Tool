@@ -2,6 +2,7 @@ import json
 import dateparser
 import argparse
 import ast
+import re
 from datetime import datetime
 from time import sleep
 from selenium import webdriver
@@ -140,6 +141,28 @@ def is_passed_date(to_check_date):
 
     return False
 
+def get_session_numbers(event):
+    title = event['title']
+
+    session_string = re.search('[0-9] +of +[0-9]', title)
+    if session_string:
+        session_string = session_string.group(0).replace(' ', '')
+        splitted = session_string.split('of')
+        current_session = int(splitted[0])
+        max_session = int(splitted[1])
+    else:
+        session_string = re.search('[0-9] */ *[0-9]', title)
+        if session_string:
+            session_string = session_string.group(0).replace(' ', '')
+            splitted = session_string.split('/')
+            current_session = int(splitted[0])
+            max_session = int(splitted[1])
+
+    if session_string:
+        return (current_session, max_session)
+
+    return None
+
 def is_within_times(to_check_hour, to_check_minute):
     
     splitted = time_filter_min.split(':')
@@ -242,5 +265,9 @@ if args.command == 'filter':
 
     index = 1
     for event in events_info:
+        session = get_session_numbers(event)
+        if session:
+            print(str(session[0]) + '/' + str(session[1]))
+        
         print(str(index) + ' - Slots: ' + event['rsvp_count'] + '/' + event['max_users_count'] + ' - Waitlist: ' + event['waitlist_count'] + '\n' + event['title'] + '\n' + event['start_time'] + '\n')
         index = index + 1
