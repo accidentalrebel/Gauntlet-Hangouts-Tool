@@ -52,6 +52,11 @@ def parse_arguments():
                         help='Include events that has a waitlist.',
                         action='store_true')
 
+    parser.add_argument('-t',
+                        '--timeslot',
+                        help='Additional parameters as time.',
+                        action='store')
+
     return parser.parse_args()
 
 def load_events():
@@ -161,12 +166,15 @@ def filter_events(events):
 
     for e in events:
         parsed_date = parse_date(e['start_time'])
-        if not is_within_day(parsed_date.weekday()) or not is_within_times(parsed_date.hour, parsed_date.minute):
+        if not is_within_day(parsed_date.weekday()):
             continue
-        
+
+        if args.timeslot and not is_within_times(parsed_date.hour, parsed_date.minute):
+            continue
+       
         if not include_full and e['max_users_count'] >= e['rsvp_count']:
             continue
-        
+       
         if not include_unavailable:
             parsed_date = parse_date(e['all_access_time'])
             if not is_passed_date(parsed_date):
@@ -206,8 +214,12 @@ def load_events_info():
 args = parse_arguments()
 
 day_filter = [ 1, 2, 3, 4 ]
-time_filter_min = '08:00'
-time_filter_max = '11:00'
+
+if args.timeslot:
+    timeslots = args.timeslot.split('-')
+    time_filter_min = timeslots[0]
+    time_filter_max = timeslots[1]
+
 include_full = args.full
 include_unavailable = args.unavailable
 include_waitlist = args.waitlist
