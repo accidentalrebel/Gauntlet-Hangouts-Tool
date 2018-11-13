@@ -52,7 +52,6 @@ def parse_arguments():
                         help='Include events that has a waitlist.',
                         action='store_true')
 
-
     return parser.parse_args()
 
 def load_events():
@@ -142,31 +141,19 @@ def is_within_times(to_check_hour, to_check_minute):
     filter_min_hour = int(splitted[0])
     filter_min_minute = int(splitted[1])
 
-    if to_check_hour == 23:
-        print(str(to_check_hour) + ':' + str(to_check_minute))
-
     if to_check_hour < filter_min_hour or to_check_minute < filter_min_minute:
         return False
-
-    if to_check_hour == 23:
-        print('1 did not return false')
     
     splitted = time_filter_max.split(':')
     filter_max_hour = int(splitted[0])
     filter_max_minute = int(splitted[1])
 
-    if to_check_hour <= filter_max_hour:
+    if to_check_hour < filter_max_hour:
         return True
 
-    if to_check_hour == 23:
-        print('2 did not return false')
-
-    if to_check_minute <= filter_max_minute:
+    if to_check_minute < filter_max_minute:
         return True
 
-    if to_check_hour == 23:
-        print('3 did not return false')
-        
     return False
 
 def filter_events(events):
@@ -218,9 +205,9 @@ def load_events_info():
 
 args = parse_arguments()
 
-day_filter = [ 0, 1, 2, 3, 4 ]
+day_filter = [ 1, 2, 3, 4 ]
 time_filter_min = '08:00'
-time_filter_max = '10:00'
+time_filter_max = '11:00'
 include_full = args.full
 include_unavailable = args.unavailable
 include_waitlist = args.waitlist
