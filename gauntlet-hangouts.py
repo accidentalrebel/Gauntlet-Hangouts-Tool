@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
 
-AVAILABLE_COMMANDS = ['fetch', 'filter']
+AVAILABLE_COMMANDS = ['fetch', 'filter', 'open']
 EVENTS_URL = 'https://gauntlet-hangouts.firebaseapp.com/events'
 EVENTS_INFO_URL = "https://gauntlet-hangouts.firebaseapp.com/all-events-info"
 HEADER_TITLES = ['title', 'creator', 'start_time', 'all_access_time', 'rsvp_percent', 'max_users_count', 'rsvp_count', 'waitlist_count']
@@ -74,7 +74,7 @@ def load_events():
     for element in elements:
         print(str(element.get_attribute('outerHTML')))
 
-def fetch_events_info():
+def load_events_info_page():
     print('Loading the page ' + EVENTS_INFO_URL + '...')
     driver.get(EVENTS_INFO_URL)
 
@@ -90,6 +90,9 @@ def fetch_events_info():
     # This is needed to avoid getting a stale 'tr' with the next line of code
     sleep(3)
     print('Sleeping for a bit...\n')
+        
+def fetch_events_info():
+    load_events_info_page()
 
     events = []
     tr_elements = driver.find_elements_by_tag_name('tr')
@@ -126,6 +129,36 @@ def fetch_events_info():
     
     print('-- Process Complete --')
     return events
+
+def open_event_page():
+    load_events_info_page()
+
+    #driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    
+    tr_elements = driver.find_elements_by_tag_name('tr')
+
+    if len(tr_elements) < 2:
+        print('Error opening events page. tr elements is less than 2')
+        return
+
+    found_element = None
+    for tr_element in tr_elements:
+        td_elements = tr_element.find_elements_by_tag_name('td')
+        if not td_elements:
+            continue
+        if td_elements[0].text == 'Dust Wardens 3 of 4': #'Hearts of Wulin: Gauntlet TGIT (3 of 3)': #Sorcerer (Session 2 of 2)':
+            print(td_elements[0].text)
+            found_element = tr_element
+            driver.execute_script("arguments[0].scrollIntoView();", found_element)
+            break
+
+    if found_element:
+        actions = ActionChains(driver)
+        actions.move_to_element(found_element)
+        actions.click(found_element)
+        actions.perform()
+        sleep(1)
+        print(driver.current_url)
 
 def parse_date(date_string):
     date_string = date_string.replace(' pm', '')
@@ -258,13 +291,15 @@ include_unavailable = args.unavailable
 include_waitlist = args.waitlist
 
 options = Options()
-options.headless = True
+options.headless = False
 driver = webdriver.Firefox(options=options)
 
-if args.command == 'fetch':
+if args.command == 'open':
+    open_event_page()
+elif args.command == 'fetch':
     events_info = fetch_events_info()
     save_events_info(events_info)
-if args.command == 'filter':
+elif args.command == 'filter':
     if args.refresh:
         events_info = fetch_events_info()
         save_events_info(events_info)
