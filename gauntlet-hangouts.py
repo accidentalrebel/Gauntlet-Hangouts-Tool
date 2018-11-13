@@ -53,6 +53,11 @@ def parse_arguments():
                         help='Include events that has a waitlist.',
                         action='store_true')
 
+    parser.add_argument('-s',
+                        '--session',
+                        help='Show only the first session.',
+                        action='store_true')
+
     parser.add_argument('-t',
                         '--timeslot',
                         help='Additional parameters as time.',
@@ -206,6 +211,11 @@ def filter_events(events):
         if not include_waitlist and int(e['waitlist_count']) > 0:
             continue
 
+        if args.session:
+            session = get_session_numbers(e)
+            if session and session[0] > 1:
+                continue
+
         new_events.append(e)
 
     return new_events
@@ -265,9 +275,5 @@ if args.command == 'filter':
 
     index = 1
     for event in events_info:
-        session = get_session_numbers(event)
-        if session:
-            print(str(session[0]) + '/' + str(session[1]))
-        
         print(str(index) + ' - Slots: ' + event['rsvp_count'] + '/' + event['max_users_count'] + ' - Waitlist: ' + event['waitlist_count'] + '\n' + event['title'] + '\n' + event['start_time'] + '\n')
         index = index + 1
