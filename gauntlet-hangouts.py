@@ -60,7 +60,7 @@ def parse_arguments():
 
     parser.add_argument('-t',
                         '--timeslot',
-                        help='Additional parameters as time.',
+                        help='Additional parameters as time. Format example: 8:30-18:00',
                         action='store')
 
     return parser.parse_args()
@@ -291,7 +291,7 @@ include_unavailable = args.unavailable
 include_waitlist = args.waitlist
 
 options = Options()
-options.headless = False
+options.headless = True
 driver = webdriver.Firefox(options=options)
 
 if args.command == 'open':
